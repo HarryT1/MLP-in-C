@@ -32,11 +32,13 @@ void freeMatrix(Matrix mat)
     free(mat.data);
 }
 
-Matrix transpose(Matrix m){
+Matrix transpose(Matrix m)
+{
     Matrix mat = createMatrix(m.cols, m.rows);
     for (int i = 0; i < m.cols; i++)
     {
-        for (int j = 0; j < m.rows; j++){
+        for (int j = 0; j < m.rows; j++)
+        {
             mat.data[i][j] = m.data[j][i];
         }
     }
@@ -44,11 +46,13 @@ Matrix transpose(Matrix m){
     return mat;
 }
 
-Matrix scalarMultiplication(Matrix m, double scalar){
+Matrix scalarMultiplication(Matrix m, double scalar)
+{
     Matrix mat = createMatrix(m.rows, m.cols);
     for (int i = 0; i < m.rows; i++)
     {
-        for (int j = 0; j < m.cols; j++){
+        for (int j = 0; j < m.cols; j++)
+        {
             mat.data[i][j] = m.data[i][j] * scalar;
         }
     }
@@ -56,28 +60,50 @@ Matrix scalarMultiplication(Matrix m, double scalar){
     return mat;
 }
 
-Matrix matrixSubtraction(Matrix m1, Matrix m2){
+Matrix matrixAddition(Matrix m1, Matrix m2)
+{
     if (m1.rows != m2.rows || m1.cols != m2.cols)
     {
-        perror("Incorrect matrix sizes!");
+        printf("m1: %d, %d ", m1.rows, m1.cols);
+        printf("m2: %d, %d ", m2.rows, m2.cols);
+        perror("Incorrect matrix sizes! In addition");
         exit(1);
     }
     Matrix mat = createMatrix(m1.rows, m1.cols);
     for (int i = 0; i < m1.rows; i++)
     {
-        for (int j = 0; j < m1.cols; j++){
+        for (int j = 0; j < m1.cols; j++)
+        {
+            mat.data[i][j] = m1.data[i][j] + m2.data[i][j];
+        }
+    }
+    return mat;
+}
+
+Matrix matrixSubtraction(Matrix m1, Matrix m2)
+{
+    if (m1.rows != m2.rows || m1.cols != m2.cols)
+    {
+        printf("m1: %d, %d ", m1.rows, m1.cols);
+        printf("m2: %d, %d ", m2.rows, m2.cols);
+        perror("Incorrect matrix sizes! In subtraction");
+        exit(1);
+    }
+    Matrix mat = createMatrix(m1.rows, m1.cols);
+    for (int i = 0; i < m1.rows; i++)
+    {
+        for (int j = 0; j < m1.cols; j++)
+        {
             mat.data[i][j] = m1.data[i][j] - m2.data[i][j];
         }
     }
     return mat;
 }
 
-
-
 Matrix addRowWithOnes(Matrix m)
 {
     Matrix mat = createMatrix(m.rows + 1, m.cols);
-    for (int i = 0; i < m.rows+1; i++)
+    for (int i = 0; i < m.rows + 1; i++)
     {
         for (int j = 0; j < m.cols; j++)
         {
@@ -95,7 +121,8 @@ Matrix addRowWithOnes(Matrix m)
     return mat;
 }
 
-Matrix removeRow(Matrix m, int removeRow){
+Matrix removeRow(Matrix m, int removeRow)
+{
     Matrix mat = createMatrix(m.rows - 1, m.cols);
     for (int i = 0; i < m.rows; i++)
     {
@@ -105,8 +132,9 @@ Matrix removeRow(Matrix m, int removeRow){
             {
                 mat.data[i][j] = m.data[i][j];
             }
-            else if (i > removeRow){
-                mat.data[i-1][j] = m.data[i][j];
+            else if (i > removeRow)
+            {
+                mat.data[i - 1][j] = m.data[i][j];
             }
         }
     }
@@ -114,11 +142,29 @@ Matrix removeRow(Matrix m, int removeRow){
     return mat;
 }
 
+Matrix negativeMatrix(Matrix m1)
+{
+
+    Matrix negative = createMatrix(m1.rows, m1.cols);
+
+    for (size_t i = 0; i < m1.rows; i++)
+    {
+        for (size_t j = 0; j < m1.cols; j++)
+        {
+            negative.data[i][j] = -m1.data[i][j];
+        }
+    }
+
+    return negative;
+}
+
 Matrix matrixMultiplication(Matrix m1, Matrix m2)
 {
     if (m1.cols != m2.rows)
     {
-        perror("Incorrect matrix sizes!");
+        printf("m1: %d, %d ", m1.rows, m1.cols);
+        printf("m2: %d, %d ", m2.rows, m2.cols);
+        perror("Incorrect matrix sizes! In multiplication");
         exit(1);
     }
 
@@ -138,16 +184,20 @@ Matrix matrixMultiplication(Matrix m1, Matrix m2)
     return mRes;
 }
 
-Matrix elementwiseMultiplication(Matrix m1, Matrix m2){
+Matrix elementwiseMultiplication(Matrix m1, Matrix m2)
+{
     if (m1.rows != m2.rows || m1.cols != m2.cols)
     {
-        perror("Incorrect matrix sizes!");
+        printf("m1: %d, %d ", m1.rows, m1.cols);
+        printf("m2: %d, %d ", m2.rows, m2.cols);
+        perror("Incorrect matrix sizes! In elementwise multiplication");
         exit(1);
     }
     Matrix mat = createMatrix(m1.rows, m1.cols);
     for (int i = 0; i < m1.rows; i++)
     {
-        for (int j = 0; j < m1.cols; j++){
+        for (int j = 0; j < m1.cols; j++)
+        {
             mat.data[i][j] = m1.data[i][j] * m2.data[i][j];
         }
     }
@@ -185,17 +235,22 @@ Matrix read1DFuncData(char *filepath)
     return mat;
 }
 
-double phi(double x){
-    2 / (1 + exp(-x)) - 1;
+double phi(double x)
+{
+    return 2 / (1 + exp(-x)) - 1;
 }
-double phiDeriv(double x){
-    return ((1+phi(x)) * (1-phi(x))) / 2;
+double phiDeriv(double x)
+{
+    return ((1 + phi(x)) * (1 - phi(x))) / 2;
 }
 
-Matrix applyFunction(Matrix m, double (*function)(double)) {
+Matrix applyFunction(Matrix m, double (*function)(double))
+{
     Matrix result = createMatrix(m.rows, m.cols);
-    for (int i = 0; i < m.rows; i++) {
-        for (int j = 0; j < m.cols; j++) {
+    for (int i = 0; i < m.rows; i++)
+    {
+        for (int j = 0; j < m.cols; j++)
+        {
             result.data[i][j] = function(m.data[i][j]);
         }
     }
@@ -203,25 +258,66 @@ Matrix applyFunction(Matrix m, double (*function)(double)) {
     return result;
 }
 
-// put in bigboi function later :)
-Matrix deltaWeights(Matrix W1, Matrix W2, Matrix X, Matrix targets){
-    Matrix hidden = addRowWithOnes( applyFunction( matrixMultiplication( W1, X ), phi) );
-    Matrix out = applyFunction( matrixMultiplication( W2, hidden ), phi );
-    
-    Matrix diff = matrixSubtraction( out, targets );
-    Matrix o_deriv = applyFunction( out, phiDeriv );
-    Matrix delta_o = elementwiseMultiplication( diff, o_deriv );
-    freeMatrix(diff);
-    freeMatrix(o_deriv);
+Matrix generateRandomMatrix(int rows, int cols){
+    Matrix mat = createMatrix(rows, cols);
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols; j++)
+        {
+            //Not normal, change later 😎
+            mat.data[i][j] = (-1 + 2 * (double)rand()/RAND_MAX);
+        }
+    }
+    return mat;
+}
+// Fixa memory free bullshit grejer
+double twoLayerPerceptron(double learningRate, int numOfHidden, int epochs, Matrix X, Matrix targets)
+{
+    Matrix W1 = generateRandomMatrix(numOfHidden, X.rows);
+    Matrix W2 = generateRandomMatrix(1, numOfHidden+1);
+    for (int i = 0; i < epochs; i++)
+    {
+        Matrix hidden = addRowWithOnes(applyFunction(matrixMultiplication(W1, X), phi));
+        Matrix out = applyFunction(matrixMultiplication(W2, hidden), phi);
 
-    Matrix b = matrixMultiplication( transpose(W2), delta_o );
-    Matrix h_deriv = applyFunction( hidden, phiDeriv );
-    Matrix delta_h = elementwiseMultiplication( b, h_deriv );
-    freeMatrix(b);
-    freeMatrix(h_deriv);
+        Matrix diff = matrixSubtraction(out, targets);
+        Matrix o_deriv = applyFunction(out, phiDeriv);
+        Matrix delta_o = elementwiseMultiplication(diff, o_deriv);
+        freeMatrix(diff);
+        freeMatrix(o_deriv);
 
-    delta_h = removeRow(delta_h, delta_h.rows-1);
+        Matrix b = matrixMultiplication(transpose(W2), delta_o);
+        Matrix h_deriv = applyFunction(hidden, phiDeriv);
+        Matrix delta_h = elementwiseMultiplication(b, h_deriv);
+        freeMatrix(b);
+        freeMatrix(h_deriv);
+        
+        delta_h = removeRow(delta_h, delta_h.rows - 1);
+        Matrix gradient_w1 = matrixMultiplication(delta_h, transpose(X));
+        
+        Matrix gradient_w2 = matrixMultiplication(delta_o, transpose(hidden));
 
+        freeMatrix(delta_h);
+        freeMatrix(delta_o);
+        freeMatrix(hidden);
+
+        Matrix delta_w1 = negativeMatrix(gradient_w1);
+        Matrix delta_w2 = negativeMatrix(gradient_w2);
+
+        freeMatrix(gradient_w1);
+        freeMatrix(gradient_w2);
+
+        Matrix delta_w1_lr = scalarMultiplication(delta_w1, learningRate);
+        Matrix delta_w2_lr = scalarMultiplication(delta_w2, learningRate);
+        freeMatrix(delta_w1);
+        freeMatrix(delta_w2);
+
+        W1 = matrixAddition(W1, delta_w1_lr);
+        W2 = matrixAddition(W2, delta_w2_lr);
+    }
+    //grejer här som saknas
+
+    return 0;
 }
 
 int main(int argc, char const *argv[])
@@ -230,18 +326,10 @@ int main(int argc, char const *argv[])
     Matrix input = read1DFuncData(filepath);
     filepath = "../data/cringe.txt";
     Matrix input2 = read1DFuncData(filepath);
-    Matrix res = matrixMultiplication(input, input2);
-    for (size_t i = 0; i < res.rows; i++)
-    {
-        for (size_t j = 0; j < res.cols; j++)
-        {
-            printf("%lf ", res.data[i][j]);
-        }
-        printf("\n");
-    }
+
+    twoLayerPerceptron(0.01, 20, 2, input, input2);
 
     freeMatrix(input);
-    freeMatrix(res);
 
     return 0;
 }
