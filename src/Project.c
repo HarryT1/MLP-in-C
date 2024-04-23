@@ -77,6 +77,8 @@ Matrix matrixAddition(Matrix m1, Matrix m2)
             mat.data[i][j] = m1.data[i][j] + m2.data[i][j];
         }
     }
+    freeMatrix(m1);
+    freeMatrix(m2);
     return mat;
 }
 
@@ -97,6 +99,8 @@ Matrix matrixSubtraction(Matrix m1, Matrix m2)
             mat.data[i][j] = m1.data[i][j] - m2.data[i][j];
         }
     }
+    freeMatrix(m1);
+    freeMatrix(m2);
     return mat;
 }
 
@@ -107,7 +111,7 @@ Matrix addRowWithOnes(Matrix m)
     {
         for (int j = 0; j < m.cols; j++)
         {
-            if (i < m.rows - 1)
+            if (i < mat.rows - 1)
             {
                 mat.data[i][j] = m.data[i][j];
             }
@@ -154,6 +158,7 @@ Matrix negativeMatrix(Matrix m1)
             negative.data[i][j] = -m1.data[i][j];
         }
     }
+    freeMatrix(m1);
 
     return negative;
 }
@@ -180,6 +185,8 @@ Matrix matrixMultiplication(Matrix m1, Matrix m2)
             }
         }
     }
+    freeMatrix(m1);
+    freeMatrix(m2);
 
     return mRes;
 }
@@ -199,6 +206,21 @@ Matrix elementwiseMultiplication(Matrix m1, Matrix m2)
         for (int j = 0; j < m1.cols; j++)
         {
             mat.data[i][j] = m1.data[i][j] * m2.data[i][j];
+        }
+    }
+    freeMatrix(m1);
+    freeMatrix(m2);
+    return mat;
+}
+
+Matrix copy(Matrix m)
+{
+    Matrix mat = createMatrix(m.rows, m.cols);
+    for (int i = 0; i < m.rows; i++)
+    {
+        for (int j = 0; j < m.cols; j++)
+        {
+            mat.data[i][j] = m.data[i][j];
         }
     }
     return mat;
@@ -239,9 +261,9 @@ double phi(double x)
 {
     return 2 / (1 + exp(-x)) - 1;
 }
-double phiDeriv(double x)
+double phiDeriv(double phiOfX)
 {
-    return ((1 + phi(x)) * (1 - phi(x))) / 2;
+    return ((1 + phiOfX) * (1 - phiOfX)) / 2;
 }
 
 Matrix applyFunction(Matrix m, double (*function)(double))
@@ -270,66 +292,73 @@ Matrix generateRandomMatrix(int rows, int cols){
     }
     return mat;
 }
+
+void printMatrix(Matrix m){
+    printf("%d\n",m.rows);
+    printf("%d\n",m.cols);
+    for (int i = 0; i < m.rows; i++)
+    {
+        for (int j = 0; j < m.cols; j++)
+        {
+            printf("%.2f ", m.data[i][j]);
+        }
+        printf("\n");
+    }
+    
+}
 // Fixa memory free bullshit grejer
 double twoLayerPerceptron(double learningRate, int numOfHidden, int epochs, Matrix X, Matrix targets)
 {
     Matrix W1 = generateRandomMatrix(numOfHidden, X.rows);
     Matrix W2 = generateRandomMatrix(1, numOfHidden+1);
     for (int i = 0; i < epochs; i++)
-    {
-        Matrix hidden = addRowWithOnes(applyFunction(matrixMultiplication(W1, X), phi));
-        Matrix out = applyFunction(matrixMultiplication(W2, hidden), phi);
-
-        Matrix diff = matrixSubtraction(out, targets);
-        Matrix o_deriv = applyFunction(out, phiDeriv);
-        Matrix delta_o = elementwiseMultiplication(diff, o_deriv);
-        freeMatrix(diff);
-        freeMatrix(o_deriv);
-
-        Matrix b = matrixMultiplication(transpose(W2), delta_o);
-        Matrix h_deriv = applyFunction(hidden, phiDeriv);
-        Matrix delta_h = elementwiseMultiplication(b, h_deriv);
-        freeMatrix(b);
-        freeMatrix(h_deriv);
+    {   
+        Matrix hidden = addRowWithOnes(applyFunction(matrixMultiplication(copy(W1), copy(X)), phi));
+        
+        Matrix out = applyFunction(matrixMultiplication(copy(W2), copy(hidden)), phi);
+        
+        Matrix delta_o = elementwiseMultiplication(
+            matrixSubtraction(copy(out), copy(targets)), 
+            applyFunction(copy(out), phiDeriv));
+        freeMatrix(out);
+        Matrix delta_h = elementwiseMultiplication(
+            matrixMultiplication(transpose(copy(W2)), copy(delta_o)), 
+            applyFunction(copy(hidden), phiDeriv));
         
         delta_h = removeRow(delta_h, delta_h.rows - 1);
-        Matrix gradient_w1 = matrixMultiplication(delta_h, transpose(X));
-        
+        Matrix gradient_w1 = matrixMultiplication(delta_h, transpose(copy(X)));
         Matrix gradient_w2 = matrixMultiplication(delta_o, transpose(hidden));
 
-        freeMatrix(delta_h);
-        freeMatrix(delta_o);
-        freeMatrix(hidden);
+        Matrix delta_w1 = scalarMultiplication(negativeMatrix(gradient_w1), learningRate);
+        Matrix delta_w2 = scalarMultiplication(negativeMatrix(gradient_w2), learningRate);
 
-        Matrix delta_w1 = negativeMatrix(gradient_w1);
-        Matrix delta_w2 = negativeMatrix(gradient_w2);
-
-        freeMatrix(gradient_w1);
-        freeMatrix(gradient_w2);
-
-        Matrix delta_w1_lr = scalarMultiplication(delta_w1, learningRate);
-        Matrix delta_w2_lr = scalarMultiplication(delta_w2, learningRate);
-        freeMatrix(delta_w1);
-        freeMatrix(delta_w2);
-
-        W1 = matrixAddition(W1, delta_w1_lr);
-        W2 = matrixAddition(W2, delta_w2_lr);
+        W1 = matrixAddition(W1, delta_w1);
+        W2 = matrixAddition(W2, delta_w2);
     }
-    //grejer här som saknas
+    Matrix hidden = addRowWithOnes(applyFunction(matrixMultiplication(W1, X), phi));
+    Matrix out = applyFunction(matrixMultiplication(W2, hidden), phi);
+    printMatrix(out);
 
-    return 0;
+    double mse = 0;
+    for (int i = 0; i < targets.cols; i++)
+    {
+        mse += pow(out.data[0][i] - targets.data[0][i],2);
+    }
+    mse /= targets.cols; 
+    freeMatrix(out);
+    return mse;
 }
 
 int main(int argc, char const *argv[])
-{
+{   perror("test");
     char *filepath = "../data/1dFuncData.txt";
     Matrix input = read1DFuncData(filepath);
     filepath = "../data/cringe.txt";
     Matrix input2 = read1DFuncData(filepath);
 
-    twoLayerPerceptron(0.01, 20, 2, input, input2);
+    double mse = twoLayerPerceptron(0.001, 20, 10000, input, input2);
 
-    freeMatrix(input);
+    printf("MSE: %f", mse);
 
     return 0;
 }
