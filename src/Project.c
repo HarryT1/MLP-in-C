@@ -306,7 +306,7 @@ void printMatrix(Matrix m){
     }
     
 }
-// Fixa memory free bullshit grejer
+
 double twoLayerPerceptron(double learningRate, int numOfHidden, int epochs, Matrix X, Matrix targets)
 {
     Matrix W1 = generateRandomMatrix(numOfHidden, X.rows);
@@ -349,16 +349,16 @@ double twoLayerPerceptron(double learningRate, int numOfHidden, int epochs, Matr
     return mse;
 }
 
-int main(int argc, char const *argv[])
-{   perror("test");
-    char *filepath = "../data/1dFuncData.txt";
-    Matrix input = read1DFuncData(filepath);
-    filepath = "../data/cringe.txt";
-    Matrix input2 = read1DFuncData(filepath);
+// int main(int argc, char const *argv[])
+// {   perror("test");
+//     char *filepath = "../data/1dFuncData.txt";
+//     Matrix input = read1DFuncData(filepath);
+//     filepath = "../data/cringe.txt";
+//     Matrix input2 = read1DFuncData(filepath);
 
-    double mse = twoLayerPerceptron(0.001, 20, 10000, input, input2);
+//     double mse = twoLayerPerceptron(0.001, 20, 10000, input, input2);
 
-    printf("MSE: %f", mse);
+//     printf("MSE: %f", mse);
 
-    return 0;
-}
+//     return 0;
+// }
