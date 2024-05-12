@@ -1,6 +1,8 @@
 #include "Project.c"
 #include <mpi.h>
 
+int MULTIPLICATIONSREQPEREPOCH = 5;
+
 Matrix parallelMatrixMultiplication(Matrix m1, Matrix m2)
 {
     if (m1.cols != m2.rows)
@@ -29,16 +31,9 @@ Matrix parallelMatrixMultiplication(Matrix m1, Matrix m2)
     return mRes;
 }
 
-double parallelTwoLayerPerceptron(double learningRate, int numOfHidden, int epochs, Matrix X, Matrix targets, int argc, char *argv[])
+double parallelTwoLayerPerceptron(double learningRate, int numOfHidden, int epochs, Matrix X, Matrix targets)
 {
-    int rank, size, rc;
-
-    MPI_Status status;
-    rc = MPI_Init(&argc, &argv);
-    rc = MPI_Comm_size(MPI_COMM_WORLD, &size);
-    rc = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-
+    if(rank == 0){
     Matrix W1 = generateRandomMatrix(numOfHidden, X.rows);
     Matrix W2 = generateRandomMatrix(1, numOfHidden+1);
     for (int i = 0; i < epochs; i++)
@@ -68,7 +63,16 @@ double parallelTwoLayerPerceptron(double learningRate, int numOfHidden, int epoc
     Matrix hidden = addRowWithOnes(applyFunction(parallelMatrixMultiplication(W1, X), phi));
     Matrix out = applyFunction(parallelMatrixMultiplication(W2, hidden), phi);
     printMatrix(out);
-
+    }
+    else{
+        for (int i = 0; i < epochs; i++){
+            for (int j = 0; j < MULTIPLICATIONSREQPEREPOCH; i++)
+            {
+                wait4mult
+            }
+        }
+        //2 more
+    }
     double mse = 0;
     for (int i = 0; i < targets.cols; i++)
     {
@@ -90,23 +94,39 @@ double parallelTwoLayerPerceptron(double learningRate, int numOfHidden, int epoc
         }
     }
 
-    rc = MPI_Finalize();
+    
 
     return mse;
 }
 
 int main(int argc, char *argv[])
 {   
-    //Alla körs...
+    double learningRate = 0.001;
+    int numOfHidden = 20;
+    int epochs = 100;
+
+    int rank, size, rc;
+
+    MPI_Status status;
+    rc = MPI_Init(&argc, &argv);
+    rc = MPI_Comm_size(MPI_COMM_WORLD, &size);
+    rc = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    if(rank == 0){
     perror("gaming");
     char *filepath = "data/1dFuncData.txt";
     Matrix input = read1DFuncData(filepath);
     filepath = "data/cringe.txt";
     Matrix input2 = read1DFuncData(filepath);
 
-    double mse = parallelTwoLayerPerceptron(0.001, 20, 10000, input, input2, argc, argv);
+    double mse = parallelTwoLayerPerceptron(learningRate, numOfHidden, epochs, input, input2);
 
     printf("MSE: %f", mse);
+    }
+    else{
+        parallelTwoLayerPerceptron(learningRate, numOfHidden, epochs, NULL, NULL);
+    }
+    rc = MPI_Finalize();
 
     freeMatrix(input2);
     return 0;
