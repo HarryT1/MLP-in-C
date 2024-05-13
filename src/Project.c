@@ -18,7 +18,7 @@ Matrix createMatrix(int rows, int cols)
     mat.data = (double **)malloc(rows * sizeof(double *));
     for (int i = 0; i < rows; i++)
     {
-        mat.data[i] = (double *)malloc(cols * sizeof(double));
+        mat.data[i] = (double *)calloc(cols, sizeof(double));
     }
     return mat;
 }
@@ -286,7 +286,7 @@ Matrix generateRandomMatrix(int rows, int cols){
     {
         for (int j = 0; j < cols; j++)
         {
-            //Not normal, change later 😎
+            //Not normal dist
             mat.data[i][j] = (-1 + 2 * (double)rand()/RAND_MAX);
         }
     }
