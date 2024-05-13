@@ -1,30 +1,36 @@
 #include "ParallelMatrix.c"
 #include <mpi.h>
 
-#define MULTIPLICATIONSREQPEREPOCH 5
+#define MULTIPLICATIONSREQPEREPOCH 2
 
-double parallelTwoLayerPerceptron(double learningRate, int numOfHidden, int epochs, Matrix X, Matrix targets)
+double parallelTwoLayerPerceptron(double learningRate, int numOfHidden, int epochs, Matrix X, Matrix targets, int rank, int size)
 {
-    if(rank == 0){
+    double mse;
+    if (rank == 0)
+    {
         Matrix W1 = generateRandomMatrix(numOfHidden, X.rows);
-        Matrix W2 = generateRandomMatrix(1, numOfHidden+1);
+        Matrix W2 = generateRandomMatrix(1, numOfHidden + 1);
         for (int i = 0; i < epochs; i++)
-        {   
-            Matrix hidden = addRowWithOnes(applyFunction(parallelMatrixMultiplication(copy(W1), copy(X)), phi));
-            
-            Matrix out = applyFunction(parallelMatrixMultiplication(copy(W2), copy(hidden)), phi);
-            
+        {
+            Matrix hidden = addRowWithOnes(applyFunction(parallelMatrixMult(copy(W1), copy(X), rank, size), phi));
+
+            Matrix out = applyFunction(matrixMultiplication(copy(W2), copy(hidden)), phi);
+
             Matrix delta_o = elementwiseMultiplication(
-                matrixSubtraction(copy(out), copy(targets)), 
+                matrixSubtraction(copy(out), copy(targets)),
                 applyFunction(copy(out), phiDeriv));
             freeMatrix(out);
-            Matrix delta_h = elementwiseMultiplication(
-                parallelMatrixMultiplication(transpose(copy(W2)), copy(delta_o)), 
-                applyFunction(copy(hidden), phiDeriv));
+
             
+            Matrix delta_h = elementwiseMultiplication(
+                parallelMatrixMult(transpose(copy(W2)), copy(delta_o), rank, size),
+                applyFunction(copy(hidden), phiDeriv));
+
             delta_h = removeRow(delta_h, delta_h.rows - 1);
-            Matrix gradient_w1 = parallelMatrixMultiplication(delta_h, transpose(copy(X)));
-            Matrix gradient_w2 = parallelMatrixMultiplication(delta_o, transpose(hidden));
+            
+            Matrix gradient_w1 = matrixMultiplication(delta_h, transpose(copy(X)));
+
+            Matrix gradient_w2 = matrixMultiplication(delta_o, transpose(hidden));
 
             Matrix delta_w1 = scalarMultiplication(negativeMatrix(gradient_w1), learningRate);
             Matrix delta_w2 = scalarMultiplication(negativeMatrix(gradient_w2), learningRate);
@@ -32,47 +38,37 @@ double parallelTwoLayerPerceptron(double learningRate, int numOfHidden, int epoc
             W1 = matrixAddition(W1, delta_w1);
             W2 = matrixAddition(W2, delta_w2);
         }
-        Matrix hidden = addRowWithOnes(applyFunction(parallelMatrixMultiplication(W1, X), phi));
-        Matrix out = applyFunction(parallelMatrixMultiplication(W2, hidden), phi);
+        Matrix hidden = addRowWithOnes(applyFunction(parallelMatrixMult(W1, X, rank, size), phi));
+        Matrix out = applyFunction(matrixMultiplication(W2, hidden), phi);
         printMatrix(out);
-    }
-    else{
-        for (int i = 0; i < epochs; i++){
-            for (int j = 0; j < MULTIPLICATIONSREQPEREPOCH; i++)
-            {
-                wait4mult
-            }
+
+        mse = 0;
+        for (int i = 0; i < targets.cols; i++)
+        {
+            mse += pow(out.data[0][i] - targets.data[0][i], 2);
         }
-        //2 more
-    }
-    double mse = 0;
-    for (int i = 0; i < targets.cols; i++)
-    {
-        mse += pow(out.data[0][i] - targets.data[0][i],2);
-    }
-    mse /= targets.cols; 
-    freeMatrix(out);
-    if (rank != 0)
-    {
-        rc = MPI_Send(&mse, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+        mse /= targets.cols;
+        freeMatrix(out);
     }
     else
     {
-        printf("%f from 0\n", mse);
-        for (int i = 1; i < size; i++)
+        Matrix A, B;
+        for (int i = 0; i < epochs; i++)
         {
-            rc = MPI_Recv(&mse,1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD, &status);
-            printf("%f from %d\n", mse, i);
+            for (int j = 0; j < MULTIPLICATIONSREQPEREPOCH; j++)
+            {
+                parallelMatrixMult(A, B, rank, size);  
+            }
         }
+        // one more
+        parallelMatrixMult(A, B, rank, size);
     }
-
-    
 
     return mse;
 }
 
 int main(int argc, char *argv[])
-{   
+{
     double learningRate = 0.001;
     int numOfHidden = 20;
     int epochs = 100;
@@ -80,26 +76,27 @@ int main(int argc, char *argv[])
     int rank, size, rc;
 
     MPI_Status status;
-    rc = MPI_Init(&argc, &argv);
-    rc = MPI_Comm_size(MPI_COMM_WORLD, &size);
-    rc = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    if(rank == 0){
-    perror("gaming");
-    char *filepath = "data/1dFuncData.txt";
-    Matrix input = read1DFuncData(filepath);
-    filepath = "data/cringe.txt";
-    Matrix input2 = read1DFuncData(filepath);
+    if (rank == 0)
+    {
+        char *filepath = "data/1dFuncData.txt";
+        Matrix input = read1DFuncData(filepath);
+        filepath = "data/cringe.txt";
+        Matrix input2 = read1DFuncData(filepath);
 
-    double mse = parallelTwoLayerPerceptron(learningRate, numOfHidden, epochs, input, input2);
-
-    printf("MSE: %f", mse);
+        double mse = parallelTwoLayerPerceptron(learningRate, numOfHidden, epochs, input, input2, rank, size);
+        freeMatrix(input2);
+        printf("MSE: %f\n", mse);
     }
-    else{
-        parallelTwoLayerPerceptron(learningRate, numOfHidden, epochs, NULL, NULL);
+    else
+    {
+        Matrix A, B;
+        parallelTwoLayerPerceptron(learningRate, numOfHidden, epochs, A, B, rank, size);
     }
-    rc = MPI_Finalize();
-
-    freeMatrix(input2);
+    MPI_Finalize();
+    
     return 0;
 }

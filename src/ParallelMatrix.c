@@ -61,7 +61,7 @@ void red_black(double** Block, int coord, int known_dim, int* modifiable_dim, in
 
 }
 
-Matrix parallelMatrixMult(int argc, char *argv[], Matrix A, Matrix B, int rank, int size)
+Matrix parallelMatrixMult(Matrix A, Matrix B, int rank, int size)
 {
     int dims[2], periods[2], coords[2];
     int reorder = 1;
