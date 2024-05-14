@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <time.h>
 
 typedef struct Matrix
 {
@@ -280,22 +281,24 @@ Matrix applyFunction(Matrix m, double (*function)(double))
     return result;
 }
 
-Matrix generateRandomMatrix(int rows, int cols){
+Matrix generateRandomMatrix(int rows, int cols)
+{
     Matrix mat = createMatrix(rows, cols);
     for (int i = 0; i < rows; i++)
     {
         for (int j = 0; j < cols; j++)
         {
-            //Not normal dist
-            mat.data[i][j] = (-1 + 2 * (double)rand()/RAND_MAX);
+            // Not normal dist
+            mat.data[i][j] = (-1 + 2 * (double)rand() / RAND_MAX);
         }
     }
     return mat;
 }
 
-void printMatrix(Matrix m){
-    printf("%d\n",m.rows);
-    printf("%d\n",m.cols);
+void printMatrix(Matrix m)
+{
+    printf("%d\n", m.rows);
+    printf("%d\n", m.cols);
     for (int i = 0; i < m.rows; i++)
     {
         for (int j = 0; j < m.cols; j++)
@@ -304,33 +307,33 @@ void printMatrix(Matrix m){
         }
         printf("\n");
     }
-    
 }
 
 double twoLayerPerceptron(double learningRate, int numOfHidden, int epochs, Matrix X, Matrix targets)
 {
+    X = addRowWithOnes(X);
     Matrix W1 = generateRandomMatrix(numOfHidden, X.rows);
-    Matrix W2 = generateRandomMatrix(1, numOfHidden+1);
+    Matrix W2 = generateRandomMatrix(1, numOfHidden + 1);
+    
     for (int i = 0; i < epochs; i++)
-    {   
+    {
         Matrix hidden = addRowWithOnes(applyFunction(matrixMultiplication(copy(W1), copy(X)), phi));
         
         Matrix out = applyFunction(matrixMultiplication(copy(W2), copy(hidden)), phi);
-        
+
         Matrix delta_o = elementwiseMultiplication(
-            matrixSubtraction(copy(out), copy(targets)), 
+            matrixSubtraction(copy(out), copy(targets)),
             applyFunction(copy(out), phiDeriv));
         freeMatrix(out);
         Matrix delta_h = elementwiseMultiplication(
-            matrixMultiplication(transpose(copy(W2)), copy(delta_o)), 
+            matrixMultiplication(transpose(copy(W2)), copy(delta_o)),
             applyFunction(copy(hidden), phiDeriv));
-        
         delta_h = removeRow(delta_h, delta_h.rows - 1);
         Matrix gradient_w1 = matrixMultiplication(delta_h, transpose(copy(X)));
         Matrix gradient_w2 = matrixMultiplication(delta_o, transpose(hidden));
 
-        Matrix delta_w1 = scalarMultiplication(negativeMatrix(gradient_w1), learningRate);
-        Matrix delta_w2 = scalarMultiplication(negativeMatrix(gradient_w2), learningRate);
+        Matrix delta_w1 = scalarMultiplication(gradient_w1, -learningRate);
+        Matrix delta_w2 = scalarMultiplication(gradient_w2, -learningRate);
 
         W1 = matrixAddition(W1, delta_w1);
         W2 = matrixAddition(W2, delta_w2);
@@ -342,23 +345,11 @@ double twoLayerPerceptron(double learningRate, int numOfHidden, int epochs, Matr
     double mse = 0;
     for (int i = 0; i < targets.cols; i++)
     {
-        mse += pow(out.data[0][i] - targets.data[0][i],2);
+        mse += pow(out.data[0][i] - targets.data[0][i], 2);
     }
-    mse /= targets.cols; 
+    mse /= targets.cols;
     freeMatrix(out);
     return mse;
 }
 
-// int main(int argc, char const *argv[])
-// {   perror("test");
-//     char *filepath = "../data/1dFuncData.txt";
-//     Matrix input = read1DFuncData(filepath);
-//     filepath = "../data/cringe.txt";
-//     Matrix input2 = read1DFuncData(filepath);
 
-//     double mse = twoLayerPerceptron(0.001, 20, 10000, input, input2);
-
-//     printf("MSE: %f", mse);
-
-//     return 0;
-// }

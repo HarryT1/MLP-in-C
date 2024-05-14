@@ -7,7 +7,8 @@ double parallelTwoLayerPerceptron(double learningRate, int numOfHidden, int epoc
 {
     double mse;
     if (rank == 0)
-    {
+    {   
+        X = addRowWithOnes(X);
         Matrix W1 = generateRandomMatrix(numOfHidden, X.rows);
         Matrix W2 = generateRandomMatrix(1, numOfHidden + 1);
         for (int i = 0; i < epochs; i++)
@@ -70,8 +71,8 @@ double parallelTwoLayerPerceptron(double learningRate, int numOfHidden, int epoc
 int main(int argc, char *argv[])
 {
     double learningRate = 0.001;
-    int numOfHidden = 20;
-    int epochs = 100;
+    int numOfHidden = 25;
+    int epochs = 10;
 
     int rank, size, rc;
 
@@ -82,12 +83,14 @@ int main(int argc, char *argv[])
 
     if (rank == 0)
     {
-        char *filepath = "data/1dFuncData.txt";
+        char *filepath = "data/input(1).txt";
         Matrix input = read1DFuncData(filepath);
-        filepath = "data/cringe.txt";
+        filepath = "data/output(1).txt";
         Matrix input2 = read1DFuncData(filepath);
-
+        clock_t start = clock();
         double mse = parallelTwoLayerPerceptron(learningRate, numOfHidden, epochs, input, input2, rank, size);
+        clock_t difference = clock() - start;
+        printf("Time: %f\n", difference/(float)CLOCKS_PER_SEC);
         freeMatrix(input2);
         printf("MSE: %f\n", mse);
     }

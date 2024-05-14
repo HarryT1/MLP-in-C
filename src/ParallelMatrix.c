@@ -6,28 +6,6 @@
 #include <string.h>
 #include "Project.c"
 
-void initialize_matrix(double *matrix, int rows, int cols)
-{
-    for (int i = 0; i < rows; i++)
-    {
-        for (int j = 0; j < cols; j++)
-        {
-            matrix[i * cols + j] = 1; // Random value between 0 and 1
-        }
-    }
-}
-
-void initialize_matrix_2(double *matrix, int rows, int cols)
-{
-    for (int i = 0; i < rows; i++)
-    {
-        for (int j = 0; j < cols; j++)
-        {
-            matrix[i * cols + j] = i + j; // Random value between 0 and 1
-        }
-    }
-}
-
 void red_black(double** Block, int coord, int known_dim, int* modifiable_dim, int send_neighbor, int recv_neighbor, MPI_Status status){
      
     if (coord % 2 == 0)
