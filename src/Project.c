@@ -340,7 +340,8 @@ double twoLayerPerceptron(double learningRate, int numOfHidden, int epochs, Matr
     }
     Matrix hidden = addRowWithOnes(applyFunction(matrixMultiplication(W1, X), phi));
     Matrix out = applyFunction(matrixMultiplication(W2, hidden), phi);
-    printMatrix(out);
+    //Print for output
+    //printMatrix(out);
 
     double mse = 0;
     for (int i = 0; i < targets.cols; i++)
@@ -349,6 +350,7 @@ double twoLayerPerceptron(double learningRate, int numOfHidden, int epochs, Matr
     }
     mse /= targets.cols;
     freeMatrix(out);
+    freeMatrix(targets);
     return mse;
 }
 

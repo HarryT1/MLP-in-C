@@ -41,7 +41,8 @@ double parallelTwoLayerPerceptron(double learningRate, int numOfHidden, int epoc
         }
         Matrix hidden = addRowWithOnes(applyFunction(parallelMatrixMult(W1, X, rank, size), phi));
         Matrix out = applyFunction(matrixMultiplication(W2, hidden), phi);
-        printMatrix(out);
+        //Print for output
+        //printMatrix(out);
 
         mse = 0;
         for (int i = 0; i < targets.cols; i++)
@@ -50,6 +51,7 @@ double parallelTwoLayerPerceptron(double learningRate, int numOfHidden, int epoc
         }
         mse /= targets.cols;
         freeMatrix(out);
+        freeMatrix(targets);
     }
     else
     {
@@ -66,40 +68,4 @@ double parallelTwoLayerPerceptron(double learningRate, int numOfHidden, int epoc
     }
 
     return mse;
-}
-
-int main(int argc, char *argv[])
-{
-    double learningRate = 0.001;
-    int numOfHidden = 25;
-    int epochs = 10;
-
-    int rank, size, rc;
-
-    MPI_Status status;
-    MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    if (rank == 0)
-    {
-        char *filepath = "data/input(1).txt";
-        Matrix input = read1DFuncData(filepath);
-        filepath = "data/output(1).txt";
-        Matrix input2 = read1DFuncData(filepath);
-        clock_t start = clock();
-        double mse = parallelTwoLayerPerceptron(learningRate, numOfHidden, epochs, input, input2, rank, size);
-        clock_t difference = clock() - start;
-        printf("Time: %f\n", difference/(float)CLOCKS_PER_SEC);
-        freeMatrix(input2);
-        printf("MSE: %f\n", mse);
-    }
-    else
-    {
-        Matrix A, B;
-        parallelTwoLayerPerceptron(learningRate, numOfHidden, epochs, A, B, rank, size);
-    }
-    MPI_Finalize();
-    
-    return 0;
 }
